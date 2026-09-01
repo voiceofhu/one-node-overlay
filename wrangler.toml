@@ -1,0 +1,20 @@
+name = "one-node-overlay"
+main = "./worker/index.ts"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+[[routes]]
+pattern = "overlay.marseo.eu.org"
+custom_domain = true
+
+[assets]
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/sub/*"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[[kv_namespaces]]
+binding = "OVERLAY_CONFIG"
+id = "fbda466de8c146a2b232b01c8a795cde"
