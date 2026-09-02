@@ -16,5 +16,5 @@ enabled = true
 head_sampling_rate = 1
 
 [[kv_namespaces]]
-binding = "OVERLAY_CONFIG"
+binding = "one-node-overlay"
 id = "fbda466de8c146a2b232b01c8a795cde"
