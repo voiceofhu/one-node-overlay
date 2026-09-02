@@ -73,13 +73,13 @@ export default {
     try {
       const url = new URL(request.url);
       if (url.pathname === '/api/config') {
-        if (request.method === 'GET') return getConfig(request, env);
-        if (request.method === 'PUT') return putConfig(request, env);
+        if (request.method === 'GET') return await getConfig(request, env);
+        if (request.method === 'PUT') return await putConfig(request, env);
         throw new HttpError(405, '配置接口只支持 GET 和 PUT');
       }
       if (url.pathname.startsWith('/sub/')) {
         const pathToken = decodeURIComponent(url.pathname.slice('/sub/'.length));
-        return handleSubscription(request, env, pathToken);
+        return await handleSubscription(request, env, pathToken);
       }
       return new Response('Not Found', { status: 404 });
     } catch (error) {

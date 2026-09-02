@@ -3,6 +3,7 @@ dist/
 .wrangler/
 worker-configuration.d.ts
 *.tsbuildinfo
+config/
 
 .env*
 !.env.prod.example
@@ -11,3 +12,4 @@ worker-configuration.d.ts
 
 *.log
 .DS_Store
+api.http
