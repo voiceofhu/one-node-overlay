@@ -1,4 +1,4 @@
-import { Check, Clipboard, Plus, RefreshCw, Save } from 'lucide-react';
+import { Check, Clipboard, Download, Plus, RefreshCw, Save } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 
 import { saveConfig, type ConfigResponse } from '../lib/api';
@@ -7,6 +7,7 @@ import {
   overlayConfigSchema,
   type OverlayConfig,
 } from '../lib/config';
+import { singBoxImportUrl } from '../lib/sing-box';
 
 const JsonEditor = lazy(() =>
   import('./json-editor').then((module) => ({ default: module.JsonEditor })),
@@ -177,6 +178,13 @@ export function Editor({
               {copied ? <Check size={15} /> : <Clipboard size={15} />}
               {copied ? '已复制' : '复制'}
             </button>
+            <a
+              className={secondaryButton}
+              href={singBoxImportUrl(initial.subscriptionUrl)}
+            >
+              <Download size={15} />
+              导入 sing-box
+            </a>
           </div>
         </section>
 
