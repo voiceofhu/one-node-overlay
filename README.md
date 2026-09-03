@@ -10,6 +10,12 @@ Overlay 拉取 One Node sing-box 订阅，再用一份高优先级用户 JSON �
 - UUID 同时是配置 key 和密钥；持有订阅链接的人也能编辑该配置。
 - KV 中只保存 UUID 的 SHA-256 和 AES-256-GCM 加密配置。
 
+## 请求调试
+
+- `/debug/request` 接收任意请求并返回 `ok: true`，同时原样回显 URL、查询参数、Headers、Cloudflare `request.cf` 和请求 Body。
+- `/debug` 按新到旧显示最近 100 次完整请求，支持逐条或全部展开/收起。
+- 请求历史保存在 KV 中并于 24 小时后过期；响应和查看页均不缓存。
+
 ## 本地开发
 
 ```bash

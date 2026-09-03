@@ -5,6 +5,7 @@ import { initialConfig, readConfig, writeConfig } from './config-store';
 import type { Env } from './env';
 import { errorResponse, HttpError, jsonResponse } from './errors';
 import { renderSubscription } from './subscription';
+import { inspectRequest, showRequestInspection } from './request-inspection';
 
 const maximumConfigBytes = 512_000;
 
@@ -72,6 +73,12 @@ export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
+      if (url.pathname === '/debug' && request.method === 'GET') {
+        return await showRequestInspection(env);
+      }
+      if (url.pathname === '/debug/request') {
+        return await inspectRequest(request, env);
+      }
       if (url.pathname === '/api/config') {
         if (request.method === 'GET') return await getConfig(request, env);
         if (request.method === 'PUT') return await putConfig(request, env);
