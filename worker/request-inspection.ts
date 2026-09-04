@@ -1,5 +1,3 @@
-import { jsonResponse } from './errors';
-
 import type { Env } from './env';
 
 const requestHistoryKey = 'debug:request-history';
@@ -30,6 +28,18 @@ function queryParameters(url: URL): Record<string, string | string[]> {
     } else {
       result[key] = [existing, value];
     }
+  }
+  return result;
+}
+
+function redactedSubscriptionPath(pathname: string): string {
+  return pathname.startsWith('/sub/') ? '/sub/[redacted]' : pathname;
+}
+
+function inspectedHeaders(headers: Headers): Record<string, string> {
+  const result = Object.fromEntries(headers.entries());
+  for (const name of ['authorization', 'cookie']) {
+    if (result[name]) result[name] = '[redacted]';
   }
   return result;
 }
@@ -86,17 +96,18 @@ function requestDetails(snapshot: RequestSnapshot, index: number): string {
   </details>`;
 }
 
-export async function inspectRequest(request: Request, env: Env): Promise<Response> {
+export async function recordSubscriptionRequest(request: Request, env: Env): Promise<void> {
   const url = new URL(request.url);
+  const pathname = redactedSubscriptionPath(url.pathname);
   const snapshot: RequestSnapshot = {
     id: crypto.randomUUID(),
     receivedAt: new Date().toISOString(),
     method: request.method,
-    url: request.url,
+    url: `${url.origin}${pathname}${url.search}`,
     origin: url.origin,
-    pathname: url.pathname,
+    pathname,
     query: queryParameters(url),
-    headers: Object.fromEntries(request.headers.entries()),
+    headers: inspectedHeaders(request.headers),
     cf: request.cf ?? null,
     body: await requestBody(request),
   };
@@ -108,10 +119,9 @@ export async function inspectRequest(request: Request, env: Env): Promise<Respon
     requestHistoryKey,
     JSON.stringify(history.slice(0, maximumRequestHistory)),
     {
-    expirationTtl: debugTTLSeconds,
+      expirationTtl: debugTTLSeconds,
     },
   );
-  return jsonResponse({ ok: true, viewerUrl: `${url.origin}/debug`, request: snapshot });
 }
 
 export async function showRequestInspection(env: Env): Promise<Response> {

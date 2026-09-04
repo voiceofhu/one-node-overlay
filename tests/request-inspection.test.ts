@@ -20,50 +20,37 @@ async function invoke(request: Request, env = debugEnv()): Promise<Response> {
 }
 
 describe('request inspection route', () => {
-  it('echoes method, repeated query parameters, headers, and JSON body', async () => {
+  it('records subscription requests before handling and redacts credentials', async () => {
     const env = debugEnv();
     const response = await invoke(
-      new Request('https://overlay.example.com/debug/request?name=one&tag=a&tag=b', {
-        method: 'POST',
+      new Request('https://overlay.example.com/sub/private-id?name=one&tag=a&tag=b', {
         headers: {
           Authorization: 'Bearer debug-token',
-          'Content-Type': 'application/json',
+          Cookie: 'session=private',
           'X-Debug-Value': 'visible',
         },
-        body: JSON.stringify({ hello: 'world' }),
       }),
       env,
     );
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toContain('no-store');
-    await expect(response.json()).resolves.toMatchObject({
-      ok: true,
-      request: {
-        method: 'POST',
-        pathname: '/debug/request',
-        query: { name: 'one', tag: ['a', 'b'] },
-        headers: {
-          authorization: 'Bearer debug-token',
-          'x-debug-value': 'visible',
-        },
-        body: { hello: 'world' },
-      },
-    });
+    expect(response.status).toBe(404);
 
     const viewer = await invoke(new Request('https://overlay.example.com/debug'), env);
     expect(viewer.headers.get('Content-Type')).toContain('text/html');
-    await expect(viewer.text()).resolves.toContain('Bearer debug-token');
+    const html = await viewer.text();
+    expect(html).toContain('/sub/[redacted]');
+    expect(html).toContain('x-debug-value');
+    expect(html).toContain('"tag": [');
+    expect(html).toContain('"authorization": "[redacted]"');
+    expect(html).toContain('"cookie": "[redacted]"');
+    expect(html).not.toContain('private-id');
+    expect(html).not.toContain('debug-token');
+    expect(html).not.toContain('session=private');
   });
 
-  it('accepts methods without a request body', async () => {
-    const response = await invoke(
-      new Request('https://overlay.example.com/debug/request', { method: 'DELETE' }),
-    );
-    await expect(response.json()).resolves.toMatchObject({
-      ok: true,
-      request: { method: 'DELETE', body: null },
-    });
+  it('does not expose the old debug request collector', async () => {
+    const response = await invoke(new Request('https://overlay.example.com/debug/request'));
+    expect(response.status).toBe(404);
   });
 
   it('keeps only the latest 100 requests and renders collapsible entries', async () => {
@@ -71,7 +58,7 @@ describe('request inspection route', () => {
     for (let sequence = 0; sequence <= 100; sequence += 1) {
       await invoke(
         new Request(
-          `https://overlay.example.com/debug/request?sequence=${sequence}`,
+          `https://overlay.example.com/sub/request-${sequence}?sequence=${sequence}`,
         ),
         env,
       );
