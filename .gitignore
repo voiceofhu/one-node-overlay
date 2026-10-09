@@ -13,3 +13,4 @@ config/
 *.log
 .DS_Store
 api.http
+.claude/
